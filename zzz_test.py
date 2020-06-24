@@ -1,80 +1,5 @@
 from pyddlib.add import ADD
-from sir_modelling.sir_model import compartments_derivative
-
 import numpy as np
-
-def simulate_transition(state, beta, gamma):
-  St, It, Rt = state
-  dSdt, dIdt, dRdt = compartments_derivative(state, beta, gamma)
-
-  return ( St + dSdt, It + dIdt, Rt + dRdt )
-
-def approximate_value(value, approximation_threshold):
-    # TODO: melhorar essa lógica para casos em que o threshold não é multiplo de 10
-    digits = int(np.log10(approximation_threshold))
-    return np.around(value, digits)
-
-def approximate_state(state, approximation_threshold = 0.01):
-    St, It, Rt = state
-
-    approximated_St = approximate_value(St, approximation_threshold)
-    approximated_It = approximate_value(It, approximation_threshold)
-    approximated_Rt = approximate_value(Rt, approximation_threshold)
-
-    return (approximated_St, approximated_It, approximated_Rt)
-
-def enumerate_states(approximation_threshold):
-    # should include 0 and 1 in values (this is why we have division + 1 values)
-    divisions = int((1.0 / approximation_threshold) + 1.0)
-    variable_values = np.linspace(0.0, 1.0, num=divisions)
-
-    states = []
-
-    for s_index in range(0, divisions):
-        for i_index in range(0, divisions):
-            for r_index in range(0, divisions):
-                susceptibles = variable_values[s_index]
-                infective = variable_values[i_index]
-                recovered = variable_values[r_index]
-
-                if (susceptibles + infective + recovered) == 1.0:
-                    states.append( (susceptibles, infective, recovered) )
-
-    return states
-
-def enumerate_transitions(approximation_threshold, gamma, beta, states):
-    transitions_for_beta = []
-
-    for state in states:
-        next_state = simulate_transition(state, beta, gamma)
-        approximated_next_state = approximate_state(next_state, approximation_threshold)
-        transitions_for_beta.append( (state, approximated_next_state, 1.0) )
-
-    return transitions_for_beta
-
-def enumerate_reward(approximation_threshold, states):
-    reward_per_state = []
-
-    for state in states:
-        susceptibles, infective, recovered = state
-
-        reward = (10 * susceptibles + 5 * recovered - 15 * infective) / approximation_threshold
-        reward_per_state.append( (state, reward) )
-
-    return reward_per_state
-
-def create_enumerative_representation(approximation_threshold, gamma, betas):
-    states = enumerate_states(approximation_threshold)
-
-    transitions_per_beta = {}
-
-    # for each beta discover deterministic transitions
-    for beta in betas:
-        transitions_per_beta[beta] = enumerate_transitions(approximation_threshold, gamma, beta, states)
-
-    rewards = enumerate_reward(approximation_threshold, states)
-
-    return states, transitions_per_beta, rewards
 
 def value_to_variable_string(prefix, value, approximation_threshold):
     int_value = int(value / approximation_threshold)
@@ -153,24 +78,61 @@ def factored_reward(rewards, var_to_id, approximation_threshold):
 # Script start
 ##############################################################################
 
+from sir_modelling.enumerative_model import create_representation
+from mdp.algorithms.value_iteration import enumerative_finite_horizon_value_iteration
+
+import time
+
 approximation_threshold = 0.01
 
 # beta (infection rate)
 # assumption
 # beta < 1.0 - social distancing
 # beta >= 1.0 - no social distancing
-betas = [0.5, 1.0]
+betas = [0.5, 1.0, 2.5, 4]
 
 # recovery rate (1 person each 4 days)
 gamma = 1.0 / 4.0
 
-states, transitions_per_beta, rewards = create_enumerative_representation(approximation_threshold, gamma, betas)
+print("building SIR enumerative representation")
+print()
 
+start_time = time.perf_counter()
+mdp = create_representation(approximation_threshold, gamma, betas)
+elapsed_time = time.perf_counter() - start_time
+
+
+print(f"states: {len(mdp.states)}, {mdp.states[0:5]}")
+print(f"actions: {mdp.actions}")
+
+first_action = mdp.actions[0]
+
+print(f"reward: {mdp.reward_matrix(first_action)[0, 0]}")
+
+print(f"transition: {mdp.transition_matrix(first_action)[0, 0]}")
+print(f"transition: {mdp.transition_matrix(first_action)[0, 1]}")
+print(f"Elapsed time: {elapsed_time:0.4f} seconds")
+
+print()
+print("Running VI for representation")
+print()
+
+start_time = time.perf_counter()
+policy, value_function, statistics = enumerative_finite_horizon_value_iteration(mdp, 0.9, horizon=30)
+elapsed_time = time.perf_counter() - start_time
+
+print(f"statistics: {statistics}")
+print(f"max value: {max(value_function)}")
+print(f"policy for first state: {policy[mdp.states[0]]}")
+print(f"Elapsed time: {elapsed_time:0.4f} seconds")
 # Results
 
-print(f"states: {len(states)}")
+#states, transitions_per_beta, rewards = create_representation(approximation_threshold, gamma, betas)
 
-for beta in betas:
-    print(f"action {beta}: {len(transitions_per_beta[beta])}")
+# print(f"states: {len(states)}")
 
-print(f"rewards: {len(rewards)}")
+# for beta in betas:
+#     print(f"action {beta}: {len(transitions_per_beta[beta])}")
+
+# for beta in betas:
+#     print(f"reward {beta}: {len(rewards[beta])}")

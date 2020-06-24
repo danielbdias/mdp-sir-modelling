@@ -7,5 +7,6 @@ numpy
 pyddlib
 pylint
 pyyaml
+scipy
 watchdog
 watchdog[watchmedo]
