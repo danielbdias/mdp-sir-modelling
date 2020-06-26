@@ -22,7 +22,8 @@ def approximate_state(state, states, approximation_threshold = 0.01):
         approximated_It_percentile += (-1 * approximated_St_percentile)
         approximated_St_percentile = 0
 
-    residual = 100 - (approximated_St_percentile + approximated_It_percentile + approximated_Rt_percentile)
+    precision = int(1.0 / approximation_threshold)
+    residual = precision - (approximated_St_percentile + approximated_It_percentile + approximated_Rt_percentile)
 
     if residual != 0:
         # sometimes we can have a residual due the truncation procedure
@@ -40,20 +41,21 @@ def approximate_state(state, states, approximation_threshold = 0.01):
 
 def enumerate_states(approximation_threshold):
     # should include 0 and 1 in values (this is why we have division + 1 values)
-    divisions = int((1.0 / approximation_threshold) + 1.0)
+    precision = int(1.0 / approximation_threshold)
+    divisions = precision + 1
 
     states = []
 
     for s_percentile in range(0, divisions):
         for i_percentile in range(0, divisions):
-            for r_percentile in range(0, divisions):
-                # make sum as integer to avoid floating point comparison
-                if s_percentile + i_percentile + r_percentile == 100:
-                    susceptibles = s_percentile * approximation_threshold
-                    infective = i_percentile * approximation_threshold
-                    recovered = r_percentile * approximation_threshold
+            r_percentile = precision - (s_percentile + i_percentile)
+            if r_percentile < 0: continue
 
-                    states.append( (susceptibles, infective, recovered) )
+            susceptibles = s_percentile * approximation_threshold
+            infective = i_percentile * approximation_threshold
+            recovered = r_percentile * approximation_threshold
+
+            states.append( (susceptibles, infective, recovered) )
 
     return states
 

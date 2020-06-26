@@ -83,7 +83,8 @@ from mdp.algorithms.value_iteration import enumerative_finite_horizon_value_iter
 
 import time
 
-approximation_threshold = 0.01
+approximation_threshold = 0.001
+# approximation_threshold = 0.01
 
 # beta (infection rate)
 # assumption
@@ -94,11 +95,15 @@ betas = [0.5, 1.0, 2.5, 4]
 # recovery rate (1 person each 4 days)
 gamma = 1.0 / 4.0
 
+initial_state = "s_999_i_001_r_000"
+# initial_state = "s_99_i_01_r_00"
+
 print("Building SIR enumerative representation")
 print()
 
 start_time = time.perf_counter()
-mdp = create_representation(approximation_threshold, gamma, betas)
+reward_function = lambda susceptibles, infective, recovered: 10 * susceptibles + 5 * recovered - 15 * infective
+mdp = create_representation(approximation_threshold, gamma, betas, reward_function)
 elapsed_time = time.perf_counter() - start_time
 
 
@@ -120,8 +125,6 @@ print()
 start_time = time.perf_counter()
 policy, value_function, statistics = enumerative_finite_horizon_value_iteration(mdp, 0.9, horizon=30)
 elapsed_time = time.perf_counter() - start_time
-
-initial_state = "s_99_i_01_r_00"
 
 print(f"statistics: {statistics}")
 print(f"max value: {max(value_function)}")

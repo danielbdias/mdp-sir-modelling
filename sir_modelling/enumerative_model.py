@@ -8,7 +8,13 @@ MDP = namedtuple("MarkovDecisionProcess", ["states", "actions", "transition_matr
 def get_variable_string(prefix, value, approximation_threshold):
     precision = 1.0 / approximation_threshold
     int_value = int(np.around(value * precision))
-    return f"{prefix}_{int_value:02d}"
+
+    format_digits = int(abs(np.log10(approximation_threshold)))
+    format_string = f"0{format_digits}d"
+
+    formatted_number = ("{:" + format_string + "}").format(int_value)
+
+    return f"{prefix}_{formatted_number}"
 
 def get_single_human_readable_state(state, approximation_threshold):
     susceptibles, infective, recovered = state
@@ -32,34 +38,34 @@ def get_human_readable_states(states, approximation_threshold):
 
     return sorted(human_readable_states)
 
-def get_reward_function(rewards_per_beta, states, approximation_threshold):
+def get_reward_function(rewards_per_beta, indexed_states, approximation_threshold):
     reward_function = {}
 
     for beta in rewards_per_beta.keys():
-        reward_list = np.zeros(( len(states), 1 ))
+        reward_list = np.zeros(( len(indexed_states), 1 ))
 
         for state, reward in rewards_per_beta[beta]:
             human_readable_state = get_single_human_readable_state(state, approximation_threshold)
-            state_index = states.index(human_readable_state)
+            state_index = indexed_states.get(human_readable_state)
             reward_list[state_index] = reward
 
         reward_function[beta] = reward_list
 
     return reward_function
 
-def get_transition_matrices(approximation_threshold, states, transitions_per_beta):
+def get_transition_matrices(approximation_threshold, indexed_states, transitions_per_beta):
     transition_matrix_per_beta = {}
 
     for beta in transitions_per_beta.keys():
-        number_of_states = len(states)
+        number_of_states = len(indexed_states)
         transition_matrix = np.zeros((number_of_states, number_of_states))
 
         for from_state, to_state, probability in transitions_per_beta[beta]:
             human_readable_from_state = get_single_human_readable_state(from_state, approximation_threshold)
             human_readable_to_state = get_single_human_readable_state(to_state, approximation_threshold)
 
-            from_state_index = states.index(human_readable_from_state)
-            to_state_index = states.index(human_readable_to_state)
+            from_state_index = indexed_states.get(human_readable_from_state)
+            to_state_index = indexed_states.get(human_readable_to_state)
 
             transition_matrix[from_state_index][to_state_index] = probability
 
@@ -67,12 +73,23 @@ def get_transition_matrices(approximation_threshold, states, transitions_per_bet
 
     return transition_matrix_per_beta
 
+def get_indexed_states(states):
+    indexed_states = {}
+
+    for index, state in enumerate(states):
+        indexed_states[state] = index
+
+    return indexed_states
+
 def create_representation(approximation_threshold, gamma, betas, reward_function = None):
     states, transitions_per_beta, rewards_per_beta = create_base_representation(approximation_threshold, gamma, betas, reward_function)
 
     human_readable_states = get_human_readable_states(states, approximation_threshold)
-    transition_matrix_per_beta = get_transition_matrices(approximation_threshold, human_readable_states, transitions_per_beta)
-    reward_matrix_per_beta = get_reward_function(rewards_per_beta, human_readable_states, approximation_threshold)
+
+    human_readable_indexed_states = get_indexed_states(human_readable_states)
+
+    transition_matrix_per_beta = get_transition_matrices(approximation_threshold, human_readable_indexed_states, transitions_per_beta)
+    reward_matrix_per_beta = get_reward_function(rewards_per_beta, human_readable_indexed_states, approximation_threshold)
 
     return MDP(
         states = human_readable_states,
