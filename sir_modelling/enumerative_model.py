@@ -120,15 +120,17 @@ def sample_state(mdp, state, action):
 def simulate_policy(policy, initial_state, mdp, horizon, approximation_threshold):
     state_name = initial_state
     visited_states = [ get_state_numeric_values(initial_state, approximation_threshold) ]
+    chosen_betas = []
 
     for i in range(horizon):
         beta = policy[state_name]
         state_name = sample_state(mdp, state_name, beta)
 
+        chosen_betas.append(beta)
         visited_states.append(get_state_numeric_values(state_name, approximation_threshold))
 
     S = list(map(lambda state: state[0], visited_states))
     I = list(map(lambda state: state[1], visited_states))
     R = list(map(lambda state: state[2], visited_states))
 
-    return S, I, R
+    return chosen_betas, S, I, R

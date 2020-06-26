@@ -83,20 +83,21 @@ from mdp.algorithms.value_iteration import enumerative_finite_horizon_value_iter
 
 import time
 
-approximation_threshold = 0.001
-# approximation_threshold = 0.01
+# approximation_threshold = 0.001
+approximation_threshold = 0.01
 
 # beta (infection rate)
 # assumption
 # beta < 1.0 - social distancing
 # beta >= 1.0 - no social distancing
-betas = [0.5, 1.0, 2.5, 4]
+# betas = [0.5, 1.0, 2.5, 4]
+betas = [2.5, 4]
 
 # recovery rate (1 person each 4 days)
 gamma = 1.0 / 4.0
 
-initial_state = "s_999_i_001_r_000"
-# initial_state = "s_99_i_01_r_00"
+# initial_state = "s_999_i_001_r_000"
+initial_state = "s_99_i_01_r_00"
 
 print("Building SIR enumerative representation")
 print()
@@ -105,7 +106,6 @@ start_time = time.perf_counter()
 reward_function = lambda susceptibles, infective, recovered: 10 * susceptibles + 5 * recovered - 15 * infective
 mdp = create_representation(approximation_threshold, gamma, betas, reward_function)
 elapsed_time = time.perf_counter() - start_time
-
 
 print(f"states: {len(mdp.states)}, {mdp.states[0:5]}")
 print(f"actions: {mdp.actions}")
@@ -139,9 +139,10 @@ print("Simulate policy")
 print()
 
 start_time = time.perf_counter()
-S, I, R = simulate_policy(policy, initial_state=initial_state, mdp=mdp, horizon=30, approximation_threshold=approximation_threshold)
+chosen_betas, S, I, R = simulate_policy(policy, initial_state=initial_state, mdp=mdp, horizon=30, approximation_threshold=approximation_threshold)
 elapsed_time = time.perf_counter() - start_time
 
+print(chosen_betas)
 print(S)
 print(I)
 print(R)
