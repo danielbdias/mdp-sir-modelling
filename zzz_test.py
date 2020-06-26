@@ -78,7 +78,7 @@ def factored_reward(rewards, var_to_id, approximation_threshold):
 # Script start
 ##############################################################################
 
-from sir_modelling.enumerative_model import create_representation
+from sir_modelling.enumerative_model import create_representation, simulate_policy
 from mdp.algorithms.value_iteration import enumerative_finite_horizon_value_iteration
 
 import time
@@ -94,7 +94,7 @@ betas = [0.5, 1.0, 2.5, 4]
 # recovery rate (1 person each 4 days)
 gamma = 1.0 / 4.0
 
-print("building SIR enumerative representation")
+print("Building SIR enumerative representation")
 print()
 
 start_time = time.perf_counter()
@@ -121,18 +121,26 @@ start_time = time.perf_counter()
 policy, value_function, statistics = enumerative_finite_horizon_value_iteration(mdp, 0.9, horizon=30)
 elapsed_time = time.perf_counter() - start_time
 
+initial_state = "s_99_i_01_r_00"
+
 print(f"statistics: {statistics}")
 print(f"max value: {max(value_function)}")
 print(f"policy for first state: {policy[mdp.states[0]]}")
+print(f"policy for initial state: {policy[initial_state]}")
+print(f"min beta in policy: {min(policy.values())}")
+print(f"max beta in policy: {max(policy.values())}")
 print(f"Elapsed time: {elapsed_time:0.4f} seconds")
-# Results
 
-#states, transitions_per_beta, rewards = create_representation(approximation_threshold, gamma, betas)
+print()
+print("Simulate policy")
+print()
 
-# print(f"states: {len(states)}")
+start_time = time.perf_counter()
+S, I, R = simulate_policy(policy, initial_state=initial_state, mdp=mdp, horizon=30, approximation_threshold=approximation_threshold)
+elapsed_time = time.perf_counter() - start_time
 
-# for beta in betas:
-#     print(f"action {beta}: {len(transitions_per_beta[beta])}")
+print(S)
+print(I)
+print(R)
 
-# for beta in betas:
-#     print(f"reward {beta}: {len(rewards[beta])}")
+print(f"Elapsed time: {elapsed_time:0.4f} seconds")
