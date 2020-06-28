@@ -81,8 +81,8 @@ def get_indexed_states(states):
 
     return indexed_states
 
-def create_representation(approximation_threshold, gamma, betas, reward_function = None):
-    states, transitions_per_beta, rewards_per_beta = create_base_representation(approximation_threshold, gamma, betas, reward_function)
+def create_representation(approximation_threshold, gamma, betas, steps_per_transition = 1, reward_function = None):
+    states, transitions_per_beta, rewards_per_beta = create_base_representation(approximation_threshold, gamma, betas, steps_per_transition, reward_function)
 
     human_readable_states = get_human_readable_states(states, approximation_threshold)
 

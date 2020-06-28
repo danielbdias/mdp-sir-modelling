@@ -21,15 +21,9 @@ def compartments_derivative(compartments, beta, gamma):
     dRdt = recovered_derivative(compartments, beta, gamma)
     return dSdt, dIdt, dRdt
 
-def simulate_sir_epidemics(population_size, infected_people_per_day, infection_duration, days_of_simulation, initial_state = None):
+def simulate_sir_epidemics(infected_people_per_day, infection_duration, days_of_simulation, initial_state):
     beta = infected_people_per_day
     gamma = 1.0 / infection_duration
-
-    if initial_state is None:
-        S0 = (population_size - 1.0) / population_size
-        I0 = 1.0 / population_size
-        R0 = 0.0
-        initial_state = S0, I0, R0
 
     t = np.linspace(0, days_of_simulation - 1, days_of_simulation)
 

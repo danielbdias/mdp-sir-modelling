@@ -1,14 +1,8 @@
-from sir_modelling.simulation import compartments_derivative
+from sir_modelling.simulation import simulate_sir_epidemics
 
 import numpy as np
 
-def simulate_transition(state, beta, gamma):
-  St, It, Rt = state
-  dSdt, dIdt, dRdt = compartments_derivative(state, beta, gamma)
-
-  return ( St + dSdt, It + dIdt, Rt + dRdt )
-
-def approximate_state(state, states, approximation_threshold = 0.01):
+def approximate_state(state, approximation_threshold = 0.01):
     St, It, Rt = state
 
     # use integers to avoid floating point problems
@@ -39,6 +33,18 @@ def approximate_state(state, states, approximation_threshold = 0.01):
         approximated_Rt_percentile * approximation_threshold
     )
 
+def simulate_transition(state, beta, gamma, approximation_threshold, steps_per_transition = 1):
+    t, S, I, R = simulate_sir_epidemics(
+        infected_people_per_day = beta,
+        infection_duration = 1.0 / gamma,
+        days_of_simulation = (steps_per_transition + 1),
+        initial_state = state
+    )
+
+    state = ( S[-1], I[-1], R[-1] )
+
+    return approximate_state(state, approximation_threshold)
+
 def enumerate_states(approximation_threshold):
     # should include 0 and 1 in values (this is why we have division + 1 values)
     precision = int(1.0 / approximation_threshold)
@@ -59,20 +65,16 @@ def enumerate_states(approximation_threshold):
 
     return states
 
-def enumerate_transitions(approximation_threshold, gamma, beta, states):
+def enumerate_transitions(approximation_threshold, beta, gamma, states, steps_per_transition):
     transitions_for_beta = []
 
     for state in states:
-        next_state = simulate_transition(state, beta, gamma)
-        approximated_next_state = approximate_state(next_state, states, approximation_threshold)
-        transitions_for_beta.append( (state, approximated_next_state, 1.0) )
+        next_state = simulate_transition(state, beta, gamma, approximation_threshold, steps_per_transition)
+        transitions_for_beta.append( (state, next_state, 1.0) )
 
     return transitions_for_beta
 
-def enumerate_reward(approximation_threshold, beta, states, reward_function = None):
-    if reward_function is None:
-        reward_function = lambda susceptibles, infective, recovered: 10 * susceptibles + 5 * recovered - 15 * infective
-
+def enumerate_reward(approximation_threshold, beta, states, reward_function):
     reward_per_state = []
 
     for state in states:
@@ -83,7 +85,10 @@ def enumerate_reward(approximation_threshold, beta, states, reward_function = No
 
     return reward_per_state
 
-def create_representation(approximation_threshold, gamma, betas, reward_function = None):
+def create_representation(approximation_threshold, gamma, betas, steps_per_transition = 1, reward_function = None):
+    if reward_function is None:
+        reward_function = lambda susceptibles, infective, recovered: 10 * susceptibles + 5 * recovered - 15 * infective
+
     states = enumerate_states(approximation_threshold)
 
     transitions_per_beta = {}
@@ -91,7 +96,7 @@ def create_representation(approximation_threshold, gamma, betas, reward_function
 
     # for each beta discover deterministic transitions
     for beta in betas:
-        transitions_per_beta[beta] = enumerate_transitions(approximation_threshold, gamma, beta, states)
+        transitions_per_beta[beta] = enumerate_transitions(approximation_threshold, beta, gamma, states, steps_per_transition)
         rewards_per_beta[beta] = enumerate_reward(approximation_threshold, beta, states, reward_function)
 
     return states, transitions_per_beta, rewards_per_beta
