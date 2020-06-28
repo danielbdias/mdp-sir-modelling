@@ -4,7 +4,8 @@ import numpy as np
 # Script start
 ##############################################################################
 
-from sir_modelling.enumerative_model import create_representation, simulate_policy
+from sir_modelling.enumerative_model import create_representation
+from sir_modelling.enumerative_model_simulation import simulate_policy_with_mdp_model
 from mdp.algorithms.value_iteration import enumerative_finite_horizon_value_iteration
 
 import time
@@ -21,6 +22,7 @@ betas = [0.5, 1.0, 2.5, 4]
 # recovery rate (1 person each 4 days)
 gamma = 1.0 / 4.0
 
+horizon=30
 steps_per_transition = 7
 initial_state = "s_99_i_01_r_00"
 
@@ -48,7 +50,7 @@ print("Running VI for representation")
 print()
 
 start_time = time.perf_counter()
-policy, value_function, statistics = enumerative_finite_horizon_value_iteration(mdp, 0.9, horizon=30)
+policy, value_function, statistics = enumerative_finite_horizon_value_iteration(mdp, 0.9, horizon=horizon)
 elapsed_time = time.perf_counter() - start_time
 
 print(f"statistics: {statistics}")
@@ -64,7 +66,7 @@ print("Simulate policy")
 print()
 
 start_time = time.perf_counter()
-chosen_betas, S, I, R = simulate_policy(policy, initial_state=initial_state, mdp=mdp, horizon=30, approximation_threshold=approximation_threshold)
+chosen_betas, S, I, R = simulate_policy_with_mdp_model(policy, initial_state=initial_state, mdp=mdp, horizon=horizon, approximation_threshold=approximation_threshold)
 elapsed_time = time.perf_counter() - start_time
 
 print(chosen_betas)

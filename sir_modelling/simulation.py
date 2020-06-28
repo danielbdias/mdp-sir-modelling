@@ -35,13 +35,13 @@ def simulate_sir_epidemics(infected_people_per_day, infection_duration, days_of_
 
     return t, S, I, R
 
-def plot_sir(t, S, I, R):
+def plot_sir(t, S, I, R, time_label='days'):
   f, ax = plt.subplots(1,1,figsize=(10,4))
   ax.plot(t, S, 'b', alpha=0.7, linewidth=2, label='Susceptible')
   ax.plot(t, I, 'y', alpha=0.7, linewidth=2, label='Infected')
   ax.plot(t, R, 'g', alpha=0.7, linewidth=2, label='Recovered')
 
-  ax.set_xlabel('Time (days)', labelpad=10)
+  ax.set_xlabel(f"Time ({time_label})", labelpad=10)
   ax.set_ylabel('Population (%)', labelpad=10)
 
   ax.yaxis.set_tick_params(length=0)
