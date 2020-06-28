@@ -21,7 +21,7 @@ def compute_bellman_backup(state_index, mdp, gamma, value_function):
 def compute_policy(mdp, gamma, value_function):
     policy = {}
 
-    for state_index, state in enumerate(mdp.states):
+    for state_index, state_name in enumerate(mdp.states):
         max_value = float("-inf")
         best_action = None
 
@@ -32,7 +32,7 @@ def compute_policy(mdp, gamma, value_function):
                 max_value = quality
                 best_action = action
 
-        policy[state] = best_action
+        policy[state_name] = best_action
 
     return policy
 
