@@ -30,7 +30,7 @@ print("Building SIR enumerative representation")
 print()
 
 start_time = time.perf_counter()
-reward_function = lambda susceptibles, infective, recovered: 10 * susceptibles + 5 * recovered - 15 * infective
+reward_function = lambda susceptibles, infective, recovered, beta: 10 * susceptibles + 5 * recovered - 15 * infective
 mdp = create_representation(approximation_threshold, gamma, betas, steps_per_transition, reward_function)
 elapsed_time = time.perf_counter() - start_time
 
