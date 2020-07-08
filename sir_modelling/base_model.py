@@ -80,14 +80,14 @@ def enumerate_reward(approximation_threshold, beta, states, reward_function):
     for state in states:
         susceptibles, infective, recovered = state
 
-        reward = reward_function(susceptibles, infective, recovered) / approximation_threshold
+        reward = reward_function(susceptibles, infective, recovered, beta) / approximation_threshold
         reward_per_state.append( (state, reward) )
 
     return reward_per_state
 
 def create_representation(approximation_threshold, gamma, betas, steps_per_transition = 1, reward_function = None):
     if reward_function is None:
-        reward_function = lambda susceptibles, infective, recovered: 10 * susceptibles + 5 * recovered - 15 * infective
+        reward_function = lambda susceptibles, infective, recovered, beta: 10 * susceptibles + 5 * recovered - 15 * infective
 
     states = enumerate_states(approximation_threshold)
 
