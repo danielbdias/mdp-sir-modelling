@@ -11,15 +11,15 @@ def recreate_state(discretized_state, truncate_digits = 4):
     splitted_state = discretized_state.split("_")
     return list(map(lambda item: int(item) / (10 ** truncate_digits), splitted_state))
 
-def is_goal(discretized_state):
-    S, E, I, R = recreate_state(discretized_state)
-    return (I < 0.1)
+def is_goal(discretized_state, simulator):
+    state = recreate_state(discretized_state)
+    return simulator.is_goal(state)
 
 def compute_quality(state, action, simulator, gamma, value_function):
     reward = simulator.reward(recreate_state(state))
     next_state = discretize_state(simulator.simulate_action(action))
 
-    return reward + gamma * value_function[next_state]
+    return reward + gamma * value_function.get(next_state, 0.0)
 
 def compute_bellman_backup(state, simulator, gamma, value_function):
     qualities = []
@@ -58,7 +58,7 @@ def residual(state, simulator, gamma, value_function):
     action = compute_greedy_action(state, simulator, gamma, value_function)
     quality = compute_quality(state, action, simulator, gamma, value_function)
 
-    return abs(value_function[state] - quality)
+    return abs(value_function.get(state, 0.0) - quality)
 
 def check_solved(root_state, epsilon, solved_states, simulator, gamma, value_function):
     solved = True
@@ -118,7 +118,7 @@ def enumerative_lrtdp_with_simulator(simulator, gamma, max_depth, epsilon):
         while (state not in solved_states):
             visited_states.append(state)
 
-            if is_goal(state):
+            if is_goal(state, simulator):
                 break
 
             value_function[state] = compute_bellman_backup(state, simulator, gamma, value_function)
@@ -140,7 +140,7 @@ def enumerative_lrtdp_with_simulator(simulator, gamma, max_depth, epsilon):
                 break
 
         # keep initial state residual
-        maximum_residuals.append(max(residual(initial_state, simulator, gamma, value_function)))
+        #maximum_residuals.append(max(residual(initial_state, simulator, gamma, value_function)))
 
     # compute policy
     policy = compute_policy(simulator, gamma, value_function)

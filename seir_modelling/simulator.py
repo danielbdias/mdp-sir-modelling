@@ -11,7 +11,7 @@ class Simulator:
         self.start()
 
     def start(self):
-        self.current_state = self.initial_state.copy()
+        self.current_state = self.initial_state
         return self.current_state
 
     def simulate_action(self, action):
@@ -27,3 +27,7 @@ class Simulator:
     def reward(self, state):
         S, E, I, R = state
         return 1.0 - I
+
+    def is_goal(self, state):
+        S, E, I, R = state
+        return (I < 0.001)
